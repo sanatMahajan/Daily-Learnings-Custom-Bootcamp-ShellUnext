@@ -1,0 +1,69 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DSInput07",
+						"type": "DatasetReference"
+					},
+					"name": "MovieDataSource1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DSOutput07",
+						"type": "DatasetReference"
+					},
+					"name": "MovieDataSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FilterYear"
+				},
+				{
+					"name": "FilterGenre"
+				},
+				{
+					"name": "RottenTomatoes"
+				},
+				{
+					"name": "select"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Film as string,",
+				"          Genre as string,",
+				"          {Lead Studio} as string,",
+				"          {Audience score %} as string,",
+				"          Profitability as string,",
+				"          {Rotten Tomatoes %} as string,",
+				"          {Worldwide Gross} as string,",
+				"          Year as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> MovieDataSource1",
+				"MovieDataSource1 filter(toInteger(Year) >= 2007 && toInteger(Year)<=2009) ~> FilterYear",
+				"FilterYear filter(rlike(Genre, 'Comedy')) ~> FilterGenre",
+				"FilterGenre filter(toFloat({Rotten Tomatoes %})>=75) ~> RottenTomatoes",
+				"RottenTomatoes select(mapColumn(",
+				"          Film,",
+				"          Genre,",
+				"          Year",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select",
+				"select sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> MovieDataSink"
+			]
+		}
+	}
+}
